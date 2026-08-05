@@ -1,0 +1,11 @@
+# 两阶段构建：musl 静态编译 -> distroless（Phase 5 启用）
+FROM rust:1-alpine AS build
+RUN apk add --no-cache musl-dev
+WORKDIR /src
+COPY . .
+RUN cargo build --release --target aarch64-unknown-linux-musl
+
+FROM gcr.io/distroless/static
+COPY --from=build /src/target/aarch64-unknown-linux-musl/release/bot-app /bot
+VOLUME /data
+ENTRYPOINT ["/bot", "--config", "/data/config.toml"]
